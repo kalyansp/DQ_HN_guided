@@ -1,0 +1,113 @@
+import datetime as dt
+from csv import reader
+opened_file = open('hacker_news.csv',encoding='utf8')
+read_file = reader(opened_file)
+hn = list(read_file)
+hn_header = hn[0]
+hn = hn[1:]
+
+ask_post = []
+show_post = []
+other_post = []
+
+for row in hn:
+    title = row[1]
+    if title.lower().startswith('ask hn'):
+        ask_post.append(row)
+    elif title.lower().startswith('show hn'):
+        show_post.append(row)
+    else:
+        other_post.append(row)
+        
+print(ask_post[:3])
+
+## function to find the total number of comments and its average in the given list
+
+def avg_comment_calc(post_list):
+    new_comment = 0
+    for row in post_list:
+        comment = int(row[4])
+        new_comment += comment
+    avg_comment = new_comment/len(post_list)
+    return(avg_comment)
+    
+
+print(avg_comment_calc(ask_post))
+print(avg_comment_calc(show_post))
+print(avg_comment_calc(other_post))
+
+
+post_per_hour = {}
+comments_per_hour = {}
+
+result_list = []
+
+for row in ask_post:
+    time = row[6]
+    comments = row[4]
+    temp=[time,comments]
+    result_list.append(temp)
+    
+for row in result_list:
+    comments = int(row[1])
+    time = row[0]
+    time = dt.datetime.strptime(time,'%m/%d/%Y %H:%M')
+    hour = dt.datetime.strftime(time,'%H')
+    
+    
+    if hour not in post_per_hour:
+        post_per_hour[hour] = 1
+        comments_per_hour[hour] = comments
+        
+    elif hour in post_per_hour:
+        post_per_hour[hour] += 1
+        comments_per_hour[hour] += comments
+    
+    
+
+print(post_per_hour)
+print('\n', comments_per_hour)
+
+## average comments for the post on the particular hour
+
+avg_comments_hour = []
+
+for hour in comments_per_hour:
+    temp = [hour, comments_per_hour[hour] / post_per_hour[hour]]
+    
+    avg_comments_hour.append(temp)
+
+print(avg_comments_hour)
+
+## for swaping the elements inside list to get sorted based on the number of average comments
+
+swap_avg_comments = []
+
+for row in avg_comments_hour:
+    temp = [row[1],row[0]]
+    swap_avg_comments.append(temp)
+
+sorted_avg_comments = sorted(swap_avg_comments,reverse=True)
+
+print(sorted_avg_comments)
+
+## converting the hour into hour and minutes format
+
+for row in sorted_avg_comments:
+    time = row[1]
+    time = dt.datetime.strptime(time,'%H')
+    hour = time.strftime("%H:%M")
+    row[1] = hour
+
+## checking the time is correctly formatted
+
+for row in sorted_avg_comments[:3]:
+    print(row)
+
+## producing a string format for the analysis we did in the number of comments that was created on a particular hour
+
+for row in sorted_avg_comments:
+    avg_comments = row[0]
+    time = row[1]
+    
+    print("At {} {:.2f} average comments per post were received".format(time,avg_comments),'\n')
